@@ -12,21 +12,23 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { UpdateProfileValues, updateProfileSchema } from "@/lib/validation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { User } from "next-auth";
-import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { updateProfile } from "./actions";
+import { updateProfileSchema, UpdateProfileValues } from "@/lib/validation";
+import { User } from "next-auth";
+import { useFormStatus } from "react-dom";
+import { Loader } from "lucide-react";
 
 interface SettingsPageProps {
   user: User;
 }
 
-export default function SettingsPage({ user }: SettingsPageProps) {
+export default function SettingsPage({user}: SettingsPageProps) {
   const { toast } = useToast();
 
-  const session = useSession();
+  const {pending} = useFormStatus();
 
   const form = useForm<UpdateProfileValues>({
     resolver: zodResolver(updateProfileSchema),
@@ -36,8 +38,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
   async function onSubmit(data: UpdateProfileValues) {
     try {
       await updateProfile(data);
-      toast({ description: "Profile updated." });
-      session.update();
+      toast({ description: "Profile updated.", variant: "default" });
     } catch (error) {
       toast({
         variant: "destructive",
@@ -69,9 +70,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={form.formState.isSubmitting}>
+            {pending ? (<Button>
+              <Loader />
+              Updating..
+            </Button>):(<Button type="submit">
               Submit
-            </Button>
+            </Button>)}
+            
           </form>
         </Form>
       </section>
